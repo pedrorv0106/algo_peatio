@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150405053726) do
+ActiveRecord::Schema.define(version: 20190618092909) do
 
   create_table "account_versions", force: true do |t|
     t.integer  "member_id"
@@ -100,6 +100,15 @@ ActiveRecord::Schema.define(version: 20150405053726) do
 
   add_index "authentications", ["member_id"], name: "index_authentications_on_member_id", using: :btree
   add_index "authentications", ["provider", "uid"], name: "index_authentications_on_provider_and_uid", using: :btree
+
+  create_table "blockchains", force: true do |t|
+    t.string   "key",        null: false
+    t.string   "name"
+    t.integer  "height",     null: false
+    t.string   "status",     null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "comments", force: true do |t|
     t.text     "content"
@@ -293,6 +302,7 @@ ActiveRecord::Schema.define(version: 20150405053726) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "currency"
+    t.string   "private_key"
   end
 
   create_table "payment_transactions", force: true do |t|

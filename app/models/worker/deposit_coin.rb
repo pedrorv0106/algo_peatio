@@ -11,8 +11,7 @@ module Worker
 
       channel = DepositChannel.find_by_key(channel_key)
       if channel.currency_obj.code == 'eth'
-        raw  = get_raw_eth txid
-        raw.symbolize_keys!
+        raw = Web3T.get_transaction_by_hash(txid)
         deposit_eth!(channel, txid, 1, raw)
       else
         raw  = get_raw channel, txid
@@ -25,17 +24,17 @@ module Worker
 
     def deposit_eth!(channel, txid, txout, raw)
       ActiveRecord::Base.transaction do
-        unless PaymentAddress.where(currency: channel.currency_obj.id, address: raw[:to]).first
-          Rails.logger.info "Deposit address not found, skip. txid: #{txid}, txout: #{txout}, address: #{raw[:to]}, amount: #{raw[:value].to_i(16) / 1e18}"
+        unless PaymentAddress.where(currency: channel.currency_obj.id, address: raw.to).first
+          Rails.logger.info "Deposit address not found, skip. txid: #{txid}, txout: #{txout}, address: #{raw.to}, amount: #{raw.value.to_i(16) / 1e18}"
           return
         end
         return if PaymentTransaction::Normal.where(txid: txid, txout: txout).first
-        confirmations = CoinRPC["eth"].eth_blockNumber.to_i(16) - raw[:blockNumber].to_i(16)
+        confirmations = Web3T.get_block_number - raw.blockNumber.to_i(16)
         tx = PaymentTransaction::Normal.create! \
         txid: txid,
         txout: txout,
-        address: raw[:to],
-        amount: (raw[:value].to_i(16) / 1e18).to_d,
+        address: raw.to,
+        amount: (raw.value.to_i(16) / 1e18).to_d,
         confirmations: confirmations,
         receive_at: Time.now.to_datetime,
         currency: channel.currency
@@ -50,8 +49,7 @@ module Worker
         currency: tx.currency,
         confirmations: tx.confirmations
 
-        deposit.submit!
-        deposit.accept! 
+        deposit.submit! 
       end
     rescue
       Rails.logger.error "Failed to deposit: #{$!}"

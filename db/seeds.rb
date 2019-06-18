@@ -27,3 +27,5 @@ if Rails.env == 'development'
   bar_member.tag_list.add 'hero'
   bar_member.save
 end
+
+Rake::Task['seed:blockchains'].invoke
